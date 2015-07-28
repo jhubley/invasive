@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="css/style.css" />
+	<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+	<title>Invasive Ricochet</title>
+</head>
+<body>
+<div id="container">
+	<div id="header">
+		<h1>Invasive Plants in the Bay</h1>
+		<div id="menu">
+			<ul>
+				<li class="first"><a href="/">Ice Plant</a></li>
+				<li><a href="/atlantic-cordgrass">Atlantic Cordgrass</a></li>
+				<li class="active"><a href="/gorse">Gorse</a></li>
+				<li><a href="/perennial-pepperweed">Perennial Pepperweed</a></li>
+			</ul>
+		</div>
+	</div>
+	<div id="zoom">
+		<button id="zoom_out">-</button>
+		<button id="zoom_in">+</button>
+	</div>
+	<!--<div id="infobox"></div>
+	<div id="info">content here</div> -->
+</div>
+<div id="slider">
+	<div id="play"></div>
+	<span class="year">1901</span>
+</div>
+<div id="crossfilter">
+	<svg id="graph"></svg>
+	<div id="graphlabel">Species observation counts</div>
+	<div id="legend">
+	<svg id="colors" width="20" height="160">
+		<rect x="0" y="0" width="12" height="12" fill="#ff1100"></rect>
+
+	</svg>
+		<div id="colors">
+			<ul>
+				<li>Gorse</li>
+
+			</ul>
+		</div>
+	</div>
+</div>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
