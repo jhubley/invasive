@@ -1,6 +1,7 @@
 document.onkeydown = checkKey;
 
 function checkKey(e) {
+
     e = e || window.event;
 
 		if (e.keyCode == '66') {
@@ -18,8 +19,8 @@ function checkKey(e) {
 				var obj = $("a.hkey");
 	      window.open(obj.attr("href"),"_self");
     }
-}
 
+}
 	//Animation variables
 	var maprate,
 	  pause=0, // automatically start
@@ -35,8 +36,6 @@ function checkKey(e) {
 	var minyr,
 		maxyr,
 		yr,
-		thisyr,
-		nextyr,
 		dates,
 		years;
 
@@ -55,30 +54,35 @@ function checkKey(e) {
 		reyes = [-122.861938, 38.041614];
 		
 		var width = (Math.max(window.innerWidth)/10) * 7,
-	    height = 550,
+	    height = 460,
 	    prefix = prefixMatch(["webkit", "ms", "Moz", "O"]);
 
-		// map variables
+		//map variables
 		var tile = d3.geo.tile()
 			.size([width, height]);
 
 		var projection = d3.geo.mercator()
-			.scale((1 << 15) / 2 / Math.PI)
+			.scale((1 << 17) / 2 / Math.PI)
 			.translate([-width / 2, -height / 2]); // just temporary
 
-		var tileProjection = d3.geo.mercator();
-
-		var tilePath = d3.geo.path()
-			.projection(tileProjection);
+		// var tileProjection = d3.geo.mercator();
+		// 
+		// var tilePath = d3.geo.path()
+		// 	.projection(tileProjection);
 		
-		var zoom = d3.behavior.zoom()
-			.scale(projection.scale() * 2 * Math.PI)
-			.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }));
+		// below: flyover zoom
+		var zoom = d3.behavior.zoom().on("zoom", zoomed);
+		
+		// var zoom = d3.behavior.zoom()
+		// 	.scale(projection.scale() * 2 * Math.PI)
+		// 	.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }));
 			// .on("zoom", zoomed);
 
 		var content =  d3.select("#content")
 			.style("width", width + "px")
-			.style("height", height + "px");
+			.style("height", height + "px")
+			// .call(zoom) //disabled zoom for now.
+			;
 				
 			var map = content.append("g")
 					.attr("id", "map")
@@ -86,17 +90,18 @@ function checkKey(e) {
 			var points = content.append("svg")
 					.attr("id", "points")
 					
-			var note = content.append("svg")
-					.attr("id", "note")
-					
 		 	var story = d3.select("#story")
 			
 		  var layer = map.append("div")
 					    .attr("class", "layer")
-					
-			var labels = map.append("div")
-									.attr("class", "labels")
 									
+					// below -- flyover
+					layer
+					.call(zoomTo(sf).event)
+						.transition()
+						.duration(20000)
+						.each(jump);
+							
 			var slider = d3.select('#slider')
 			
 			var sliderbox = slider.append("svg")
@@ -107,8 +112,35 @@ function checkKey(e) {
 		
 				zoomed();
 				
-		// load species observation data
-		d3.csv("../data/ice8.csv",
+				function zoomTo(location) {
+				  	return zoom
+						    .scale(projection.scale() * 2 * Math.PI)
+								.translate(projection(location).map(function(x) { return -x; }));
+				}
+
+				function jump() {
+						var t = d3.select(this);
+							 (function repeat() {
+							     t = t.transition()
+							     .call(zoomTo(belowsf).event)
+							     .transition()
+							     .call(zoomTo(sf).event)
+							     .each("end", repeat);
+						})();
+				}
+				
+		// load point data
+		d3.json("../data/1880_rail.json", function(error, rail){
+			var lines = content.append("svg")
+					.attr("class", "rail")
+			 		.style("width", width + "px")
+					.style("height", height + "px")
+					.selectAll(".rail")
+					.data(topojson.object(rail, rail.features).geometries)
+					.enter().append("path")
+					.attr("d", path);
+		});
+		d3.csv("../data/ice729.csv",
 			type,
 			function(error, data) {
 
@@ -141,6 +173,7 @@ function checkKey(e) {
 	
 			timescale
 				.rangeRound([0, width - 200])
+				.clamp(true)
 				.domain([new Date(minyr,0,1),new Date(maxyr,12,31)]);
 
 			timeaxis = d3.svg.axis()		
@@ -148,13 +181,14 @@ function checkKey(e) {
 				.orient("bottom")
 				.tickSize(0)
 				.tickPadding(12)
-				.ticks(10);
+				.ticks(10)				
+			;
 			
 			timer = sliderbox.append("g");
 						
 			timer
 				.attr("class", "x axis")
-				.attr("transform","translate(" + 100 + "," + 35 + ")")
+				.attr("transform","translate(" + 100 + "," + 50 + ")")
 				.call(timeaxis)
 				.select(".domain")
 				
@@ -172,7 +206,8 @@ function checkKey(e) {
 						clearInterval(interval);
 						update(data,val);
 						interval = setInterval(loop,maprate);
-				});
+				})
+			;
 
 			slider = timer
 				.append("g")
@@ -213,7 +248,7 @@ function checkKey(e) {
 					.attr("y1",10)
 					.attr("y2",250);
 						
-					// line chart			
+		// line chart			
 					var graph = d3.select("#graph")
 					
 					xScale = d3.scale.linear().range([100, width - 100]).domain([1862,2015]),	
@@ -254,6 +289,7 @@ function checkKey(e) {
 						var line = d3.svg.line()
 		 			  		.x(function(d){return xScale(d.key);})
 								.y(function(d){return yScale(d.values);});
+								// .interpolate('basis');
 						
 						graph.append("g")
 						.attr("class", "species")
@@ -300,33 +336,13 @@ function checkKey(e) {
 							    d3.select('.'+d.type).classed("line-hover", false);
 							    focus.attr("transform", "translate(-100,-100)");}
 							
-							// load story data
-							d3.csv("../data/icestory8.csv", function(msg) {
-
-									msg.forEach(function(d, i) {
-										d.duration = +d.duration;
-										d.width = +d.width;
-										d.height = +d.height;
-										d.Year = +d.Year;
-										place = d.place;
-										d.newscale = +d.newscale;
-									});
-																				
-									d3.csv("../data/icestorylabels.csv", function(lab) {
-
-									lab.forEach(function(d,i){
-										d.width = +d.width;
-							  		d.height = +d.height;
-							  		d.Year = +d.Year;
-									});
-							
-							function update(data,gate) {
-										yr = gate.getFullYear(); // spits out the years for slider
+									function update(data,date) {
+										yr = date.getFullYear(); // spits out the years for slider
 
 										var usedat = data.filter(yrfilter(yr)); 
 
-										var curr = [timescale(gate)];
-										
+										var curr = [timescale(date)];
+
 										handle
 											.transition(50)
 												.attr("transform",function(d) {return "translate(" + Math.floor(curr) + ",0)"});
@@ -334,7 +350,7 @@ function checkKey(e) {
 										timer.selectAll(".datemark,.handle") // point that moves on timer
 											.classed('preload',0);
 
-										d3.select(".year").text(d3.time.format("%Y")(gate)); //big date next to slider
+										d3.select(".year").text(d3.time.format("%Y")(date)); //big date next to slider
 
 										timer.select(".datemark.labelbox")
 											.attr("height", 50)
@@ -347,9 +363,7 @@ function checkKey(e) {
 										.enter()
 										.append("circle")
 										.attr("class", function(d){return "sighting " + d.Taxon + " " + d.Year});
-										
-										// web socket to connect to arduino
-										
+
 										// console.log("usedat: ", usedat.length); // shows number of observations in current year for all species
 										
 										// var socket = io();
@@ -363,8 +377,7 @@ function checkKey(e) {
 										circles
 										.transition()
 											.ease("linear")
-											.duration(250)
-
+											.duration(50)
 											.attr("r", function(d){if (d.InfestedArea_squarem != NaN){
 															if (d.InfestedArea_squarem > 0 && d.InfestedArea_squarem < 500){return 4;}
 															else if (d.InfestedArea_squarem > 501 && d.InfestedArea_squarem < 2000){return 8;}
@@ -379,17 +392,50 @@ function checkKey(e) {
 											})
 											.attr("cx", function(d) {return projection([d.y,d.x])[0]})
 											.attr("cy", function(d) {return projection([d.y,d.x])[1]})
-											.style("opacity", .9);
+											.style("opacity", .8)
+											.transition()
+											.duration(50)
+											.style("opacity", .3);
 
 											circles.exit().remove();
 
-												//story
-												now = msg.filter(yrfilter(yr));
+
+											//load story data
+											d3.csv("../data/icestory729.csv", function(msg) {
+
+												msg.forEach(function(d) {
+												    d.duration = +d.duration;
+												    d.width = +d.width;
+												    d.height = +d.height;
+												    d.Year = +d.Year;
+														place = d.place;
+														newscale = +d.newscale;
+												  });
 												
+												now = msg.filter(yrfilter(yr));
+												var nextyr = date.getFullYear() + 1;
+												later = msg.filter(yrfilter(nextyr));
+																								
 												var story = d3.select("#story").selectAll("rect").data(msg)
 															.enter()
 															.append("rect")
-															.attr("class", function(d){return "story " + d.Year});
+															.attr("class", function(d){return "story " +d.Year});
+
+												var boxes = d3.selectAll(".story")
+												.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
+												           function(d) { return d ? d.y + "px" : this.id; });
+
+												boxes
+														.attr("x", function(d) {return d.x + "px"; })
+														.attr("rx", 5)
+														.attr("y", function(d) {return d.y + "px"; })
+														.attr("width", function(d) {return d.width})
+														.attr("height", function(d) {return d.height})
+														.style("fill", "#000")
+														.style("z-index", 400)
+														.style("opacity", .6);
+
+														 	 	  boxes.exit().remove();
 
 												var text = d3.select("#story").selectAll("foreignObject").data(msg)
 														.enter()
@@ -398,7 +444,8 @@ function checkKey(e) {
 
 												var narr = d3.selectAll(".text")
 														.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-														           function(d) { return d ? d.y + "px" : this.id; });																			
+														           function(d) { return d ? d.y + "px" : this.id; },
+																			function(d) { return d.duration });																			
 
 
 												narr
@@ -408,59 +455,15 @@ function checkKey(e) {
 															.attr("height", function(d) {return d.height - 20 + 'px'})
 															.append("xhtml:body")
 															.html(function(d){return d.story})
-															.style("color", "#ffffff");
-															
-												narr.exit().remove();
-												
-												//labels
-												labelnow = lab.filter(yrfilter(yr));
-
-												var placenames = d3.select("#note").selectAll("rect").data(lab)
-															.enter()
-															.append("rect")
-															.attr("class", function(d){return "placelabel " + d.Year});
-
-												var boxes = d3.selectAll(".placelabel")
-															.data(labelnow, function(d) { return d ? d.x + "px" : this.id; }, 
-															           function(d) { return d ? d.y + "px" : this.id; });
-
-												boxes
-															.attr("x", function(d) {return projection([d.y,d.x])[0]})
-															.attr("y", function(d) {return projection([d.y,d.x])[1]})
-															.attr("rx", 5)
-															.attr("width", function(d) {return d.width})
-															.attr("height", function(d) {return d.height})
-															.style("fill", "#000")
-															.style("z-index", 400)
-															.style("opacity", .6);
-
-												boxes.exit().remove();
-															
-												var placetext = d3.select("#note").selectAll("foreignObject").data(lab)
-														.enter()
-														.append("foreignObject")
-														.attr("class", function(d){return "placetext " +d.Year});
-
-												var placenarr = d3.selectAll(".placetext")
-												.data(labelnow, function(d) { return d ? d.x : this.id; }, 
-																	 function(d) { return d ? d.y : this.id; });																		
-
-												placenarr
-															.attr("x", function(d) {return projection([d.y,d.x])[0]})
-															.attr("y", function(d) {return projection([d.y,d.x])[1]})
-															.attr("width", function(d) {return d.width - 40 + 'px'})
-															.attr("height", function(d) {return d.height - 20 + 'px'})
-															.append("xhtml:body")
-															.html(function(d){return d.label})
 															.style("color", "#ffffff")
-															.style("padding", "10px");
-
-												placenarr.exit().remove();
-												//end labels
+															narr.exit().remove();
 															
+											});  // end story data callback
+
+
 									} //end update
 
-									loop = function(msg){
+									function loop(msg){
 										clearInterval(interval);
 										
 										if ((timepause == 0 && pause == 0) || start == 0) {
@@ -472,19 +475,17 @@ function checkKey(e) {
 													setTimeout(function(){timepause = 0;},100);
 													}
 										}
-										if (now.length > 0 ){ maprate = 5000;} 
+										if (yr = minyr){ maprate = 5000;}
+										else if (later.length > 0 ){ maprate = 5000;} 
 										else { maprate = 300;}
+										
 										start = 1;
 										interval = setInterval(loop, maprate);
 									}
 
 									interval = setInterval(loop, maprate);
 
-						});  // end story label data callback
-
-				});  // end story data callback
-
-		});			//end species observation data callback
+		});			//end point data callback
 
 		
 //Filter by year.
@@ -496,7 +497,7 @@ function yrfilter(year) {
 
 function type(d) {
 			d.Year = +d.Year; 
-			d.Date = new Date(d.Year,12,01);
+			d.Date = new Date(d.Year,12);
 			return d;
 }	
 		
@@ -506,10 +507,10 @@ function zoomed() {
       .scale(zoom.scale())
       .translate(zoom.translate())
       ();
-
-  projection
-      .scale(zoom.scale() / 2 / Math.PI)
-      .translate(zoom.translate());
+  // 
+  // projection
+  //     .scale(zoom.scale() / 2 / Math.PI)
+  //     .translate(zoom.translate());
 
 		var image = layer
 				.style(prefix + "transform", matrix3d(tiles.scale, tiles.translate))
@@ -542,3 +543,44 @@ function formatLocation(p, k) {
   return (p[1] < 0 ? format(-p[1]) + "°S" : format(p[1]) + "°N") + " "
        + (p[0] < 0 ? format(-p[0]) + "°W" : format(p[0]) + "°E");
 }
+
+//zoom buttons, not being used right now
+
+// function interpolateZoom (translate, scale) {
+//     var self = this;
+//     return d3.transition().duration(350).tween("zoom", function () {
+//         var iTranslate = d3.interpolate(zoom.translate(), translate),
+//             iScale = d3.interpolate(zoom.scale(), scale);
+//         return function (t) {
+//             zoom
+//                 .scale(iScale(t))
+//                 .translate(iTranslate(t));
+//             zoomed();
+//         };
+//     });
+// }
+// function zoomClick() { // also not being used right now
+//     var clicked = d3.event.target,
+//         direction = 1,
+//         factor = 0.2,
+//         target_zoom = 1,
+//         center = [width / 2, height / 2],
+//         extent = zoom.scaleExtent(),
+//         translate = zoom.translate(),
+//         translate0 = [],
+//         l = [],
+//         view = {x: translate[0], y: translate[1], k: zoom.scale()};
+//     d3.event.preventDefault();
+//     direction = (this.id === 'zoom_in') ? 1 : -1;
+//     target_zoom = zoom.scale() * (1 + factor * direction);
+//     if (target_zoom < extent[0] || target_zoom > extent[1]) { return false; }
+//     translate0 = [(center[0] - view.x) / view.k, (center[1] - view.y) / view.k];
+//     view.k = target_zoom;
+//     l = [translate0[0] * view.k + view.x, translate0[1] * view.k + view.y];
+//     view.x += center[0] - l[0];
+//     view.y += center[1] - l[1];
+//     interpolateZoom([view.x, view.y], view.k);
+// }
+// 
+// d3.select('#zoom_out').on('click', zoomClick);
+// d3.select('#zoom_in').on('click', zoomClick);

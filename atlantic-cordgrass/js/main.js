@@ -1,30 +1,56 @@
-	//Speed & animation-control variables
-	var maprate = 400,
-		pause=1, // don't automatically start
-		timepause=0,
-		start = 0,
-		interval,
-		loop,
-		dateiter;
+document.onkeydown = checkKey;
 
-	//Data parameter variables
-	var minyr,
-		maxyr,
-		dates,
-		years;
+function checkKey(e) {
 
-	//Selection variables
-	var slider,
-		handle,
-		brush,
-		timer,
-		timeaxis,
-		timescale = d3.time.scale(),
-		datemark;
+    e = e || window.event;
+
+    if (e.keyCode == '65') {
+        // up arrow
+				var obj = $("a.akey");
+	      window.open(obj.attr("href"),"_self");
+    }
+    else if (e.keyCode == '67') {
+       // left arrow
+				var obj = $("a.ckey");
+	      window.open(obj.attr("href"),"_self");
+    }
+    else if (e.keyCode == '66') {
+       // down arrow
+				var obj = $("a.bkey");
+	      window.open(obj.attr("href"),"_self");
+    }
+
+}
+
+//Animation variables
+var maprate,
+  pause=0, // automatically start
+  timepause=0,
+	start = 0,
+	now = 0,
+	later = 0,
+	interval,
+	loop,
+	dateiterate = 0;
+
+//Date variables
+var minyr,
+	maxyr,
+	dates,
+	years;
+
+//Slider variables
+var slider,
+	handle,
+	brush,
+	timer,
+	timeaxis,
+	timescale = d3.time.scale(),
+	datemark;
 		
 		var timepad = 100; //bottom padding for slider
 		
-		var width = Math.max(window.innerWidth),
+		var width = (Math.max(window.innerWidth)/10) * 7,
 	    height = 460,
 	    prefix = prefixMatch(["webkit", "ms", "Moz", "O"]);
 
@@ -47,8 +73,7 @@
 			.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }))
 			.on("zoom", zoomed);
 
-		var content =  d3.select("#container").append("div")
-      .attr("id", "content")
+			var content =  d3.select("#content")
 			.style("width", width + "px")
 			.style("height", height + "px")
 			// .call(zoom) //disabled zoom for now. though it would be nice to pan still.
@@ -60,8 +85,7 @@
 			var points = content.append("svg")
 					.attr("id", "points")
 					
-		 	var story = content.append("svg")
-					.attr("id", "story")
+		 	var story = d3.select("#story")
 			
 		  var layer = map.append("div")
 					    .attr("class", "layer")
@@ -102,7 +126,7 @@
 	      });
 	
 			timescale
-				.rangeRound([0, 900])
+				.rangeRound([0, width - 200])
 				.clamp(true)
 				.domain([new Date(minyr,0,1),new Date(maxyr,12,31)]);
 
@@ -183,29 +207,29 @@
 			
 			dateiter = 0; // date incrementer - start
 	
-			loop = function(){
+			loop = function(msg){
 				clearInterval(interval);
 				if ((timepause == 0 && pause == 0) || start == 0) {
-					update(data,dates[dateiter]);
-					if (dateiter < dates.length - 1) {++dateiter;}
+					update(data,dates[dateiterate]);
+					if (dateiterate < dates.length - 1) {++dateiterate;}
 					else {
-							dateiter = 0;
+							dateiterate = 0;
 							timepause=1;
-							setTimeout(function(){timepause = 0;},3000);
+							setTimeout(function(){timepause = 0;},100);
 							}
 				}
+				if (later.length > 0 ){ maprate = 2000;} else { maprate = 300;}
 				start = 1;
 				interval = setInterval(loop, maprate);
 			}
 
 			interval = setInterval(loop, maprate);
 
-
 		// line chart			
 					var graph = d3.select("#graph")
 					
-					xScale = d3.scale.linear().range([100, 980]).domain([1921,2015]),	
-					yScale = d3.scale.linear().range([180, 20]).domain([0,55]),
+					xScale = d3.scale.linear().range([100, width - 100]).domain([1921,2015]),	
+					yScale = d3.scale.linear().range([180, 20]).domain([0,45]),
 					
 					xAxis = d3.svg.axis().scale(xScale).tickFormat(d3.format('0f')),
 					yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
@@ -241,7 +265,8 @@
 					
 						var line = d3.svg.line()
 		 			  		.x(function(d){return xScale(d.key);})
-								.y(function(d){return yScale(d.values);});
+								.y(function(d){return yScale(d.values);})
+								.interpolate('basis');
 						
 						graph.append("g")
 						.attr("class", "species")
@@ -324,6 +349,12 @@ function update(data,date) {
 	.append("circle")
 	.attr("class", function(d){return "sighting " + d.Taxon + " " + d.Year});
 		
+	// console.log("usedat: ", usedat.length); // shows number of observations in current year for all species
+	
+	var socket = io();
+
+	socket.emit('message', usedat.length);
+	
 	var circles = d3.selectAll(".sighting")
 	.data(usedat, function(d) { return d ? d.x : this.id; }, 
 	              function(d) { return d ? d.y : this.id; });
@@ -345,54 +376,64 @@ function update(data,date) {
 
 		circles.exit().remove();
 
+				d3.csv("data/cordst729.csv", function(msg) {
 
+					msg.forEach(function(d) {
+					    d.duration = +d.duration;
+					    d.width = +d.width;
+					    d.height = +d.height;
+					    d.Year = +d.Year;
+					  });
 
-		d3.csv("data/infoboxes.csv", function(msg) {
-			var now = msg.filter(yrfilter(yr)); 
+					now = msg.filter(yrfilter(yr));
+					var nextyr = date.getFullYear() + 1; // spits out the years for slider
+					later = msg.filter(yrfilter(nextyr));
 
-			var story = d3.select("#story").selectAll("rect").data(msg)
-			.enter()
-			.append("rect")
-			.attr("class", function(d){return "story " +d.Year});
-						
-			var boxes = d3.selectAll(".story")
-			.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-			           function(d) { return d ? d.y + "px" : this.id; });
-			boxes
-					.attr("x", function(d) {return d.x + "px"; })
-					.attr("rx", 5)
-					.attr("y", function(d) {return d.y + "px"; })
-					.attr("width", function(d) {return d.width})
-					.attr("height", function(d) {return d.height})
-					.style("fill", "#000")
-					.style("opacity", .6);
+					var story = d3.select("#story").selectAll("rect").data(msg)
+								.enter()
+								.append("rect")
+								.attr("class", function(d){return "story " +d.Year});
 
-		 	 	  boxes.exit().remove();		
-					
-			var text = d3.select("#story").selectAll("text").data(msg)
-					.enter()
-					.append("text")
-					.attr("class", function(d){return "text " +d.Year});
-					
-			var narr = d3.selectAll(".text")
+					var boxes = d3.selectAll(".story")
 					.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
 					           function(d) { return d ? d.y + "px" : this.id; });
-			narr
-						.attr("x", function(d) {return d.x - -30 + "px"; })
-						.attr("y", function(d) {return d.y - -40 + "px"; })
-						.attr("width", function(d) {return d.width + 20})
-						.attr("height", function(d) {return d.height + 20})
-						.html(function(d){return d.html})
-						.style("fill", "#ffffff")
 
-						narr.exit().remove();
-							
-		});
-		
-		
-		
-		 				
-} //end update
+					boxes
+							.attr("x", function(d) {return d.x + "px"; })
+							.attr("rx", 5)
+							.attr("y", function(d) {return d.y + "px"; })
+							.attr("width", function(d) {return d.width})
+							.attr("height", function(d) {return d.height})
+							.style("fill", "#000")
+							.style("z-index", 400)
+							.style("opacity", .6);
+
+							 	 	  boxes.exit().remove();
+
+					var text = d3.select("#story").selectAll("foreignObject").data(msg)
+							.enter()
+							.append("foreignObject")
+							.attr("class", function(d){return "text " +d.Year});
+
+					var narr = d3.selectAll(".text")
+							.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
+							           function(d) { return d ? d.y + "px" : this.id; },
+												function(d) { return d.duration });
+
+
+					narr
+								.attr("x", function(d) {return d.x - -20 + "px"; })
+								.attr("y", function(d) {return d.y - -20 + "px"; })
+								.attr("width", function(d) {return d.width - 40 + 'px'})
+								.attr("height", function(d) {return d.height - 20 + 'px'})
+								.append("xhtml:body")
+								.html(function(d){return d.story})
+								.style("color", "#ffffff")
+								narr.exit().remove();
+				});
+
+
+		} //end update
 
 
 //Filter by year.
@@ -409,7 +450,7 @@ function type(d) {
 }	
 		
 //map functions
-function zoomed(data) {
+function zoomed() {
   var tiles = tile
       .scale(zoom.scale())
       .translate(zoom.translate())
@@ -419,24 +460,20 @@ function zoomed(data) {
       .scale(zoom.scale() / 2 / Math.PI)
       .translate(zoom.translate());
 
-var circles = d3.selectAll("circle")
-							// .attr("cx", function(d) {return projection([d.y,d.x])[0]})
-							// .attr("cy", function(d) {return projection([d.y,d.x])[1]});
+		var image = layer
+				.style(prefix + "transform", matrix3d(tiles.scale, tiles.translate))
+				.selectAll(".tile")
+				.data(tiles, function(d) { return d; });
 
-var image = layer
-      .style(prefix + "transform", matrix3d(tiles.scale, tiles.translate))
-    .selectAll(".tile")
-      .data(tiles, function(d) { return d; });
+				image.exit()
+				.remove();
 
-  image.exit()
-      .remove();
-
-  image.enter().append("img")
-      .attr("class", "tile")
-			.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.385a35cf/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
-      .style("left", function(d) { return (d[0] << 8) + "px"; })
-      .style("top", function(d) { return (d[1] << 8) + "px"; });
-}
+				image.enter().append("img")
+				.attr("class", "tile")
+				.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.385a35cf/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
+				.style("left", function(d) { return (d[0] << 8) + "px"; })
+				.style("top", function(d) { return (d[1] << 8) + "px"; });
+};
 
 function matrix3d(scale, translate) {
   var k = scale / 256, r = scale % 1 ? Number : Math.round;

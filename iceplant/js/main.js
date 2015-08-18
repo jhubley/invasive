@@ -429,14 +429,53 @@ var image = layer
       .data(tiles, function(d) { return d; });
 
   image.exit()
+  		.each(function(d) { this._xhr.abort(); })
       .remove();
+			  var layers = ['water', 'landuse', 'roads'];
 
-  image.enter().append("img")
-      .attr("class", "tile")
-			.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.385a35cf/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
-      .style("left", function(d) { return (d[0] << 8) + "px"; })
-      .style("top", function(d) { return (d[1] << 8) + "px"; });
-}
+			  image.enter().append("svg")
+			      .attr("class", "tile")
+			      .style("left", function(d) { return d[0] * 256 + "px"; })
+			      .style("top", function(d) { return d[1] * 256 + "px"; })
+			      .each(function(d) {
+			        var map = d3.select(this);
+					    this._xhr = d3.xhr("https://vector.mapzen.com/osm/all/" + d[2] + "/" + d[0] + "/" + d[1] + ".mvt?api_key=vector-tiles-ukoFC5k").responseType('arraybuffer').get(function(error, json) {
+
+					      var tile = new VectorTile( new pbf( new Uint8Array(json.response) ) );
+					      var extents = 4096;
+
+					      var data = {};
+
+					      for (var key in tile.layers) {
+					        data[key] = tile.layers[key].toGeoJSON();
+					      }
+
+					      var tile_projection = d3.geo.transform({
+					        point: function(x, y) {
+					          x = x/extents*256;
+					          y = y/extents*256;
+
+					          this.stream.point(x, y);
+					        }
+					      })
+
+					      var tilePath = d3.geo.path()
+					      .projection(tile_projection)
+
+					      layers.forEach(function(layer){
+					        var layer_data = data[layer];
+
+					        if (layer_data) {
+					          map.selectAll("path")
+					            .data(layer_data.features.sort(function(a, b) { return a.properties.sort_key ? a.properties.sort_key - b.properties.sort_key : 0 }))
+					          .enter().append("path")
+					            .attr("class", function(d) { var kind = d.properties.kind || ''; return layer + '-layer ' + kind; })
+					            .attr("d", tilePath );
+					      }
+					  });
+				});
+		});
+};
 
 function matrix3d(scale, translate) {
   var k = scale / 256, r = scale % 1 ? Number : Math.round;

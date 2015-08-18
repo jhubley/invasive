@@ -4,9 +4,9 @@ function checkKey(e) {
 
     e = e || window.event;
 
-    if (e.keyCode == '65') {
-        // up arrow
-				var obj = $("a.akey");
+		if (e.keyCode == '66') {
+        // down arrow
+				var obj = $("a.bkey");
 	      window.open(obj.attr("href"),"_self");
     }
     else if (e.keyCode == '67') {
@@ -21,34 +21,39 @@ function checkKey(e) {
     }
 
 }
+	//Animation variables
+	var maprate,
+	  pause=0, // automatically start
+    timepause=0,
+		start = 0,
+		now = 0,
+		later = 0,
+		interval,
+		loop,
+		dateiterate = 0;
 
-//Animation variables
-var maprate,
-  pause=0, // automatically start
-  timepause=0,
-	start = 0,
-	now = 0,
-	later = 0,
-	interval,
-	loop,
-	dateiterate = 0;
+	//Date variables
+	var minyr,
+		maxyr,
+		yr,
+		thisyr,
+		nextyr,
+		dates,
+		years;
 
-//Date variables
-var minyr,
-	maxyr,
-	dates,
-	years;
-
-//Slider variables
-var slider,
-	handle,
-	brush,
-	timer,
-	timeaxis,
-	timescale = d3.time.scale(),
-	datemark;
+	//Slider variables
+	var slider,
+		handle,
+		brush,
+		timer,
+		timeaxis,
+		timescale = d3.time.scale(),
+		datemark;
 		
-		var timepad = 100; //bottom padding for slider
+		var sf = [-122.417, 37.775],
+		belowsf = [-122.510962, 37.580284],
+		funston = [-122.502771, 37.715402],
+		reyes = [-122.861938, 38.041614];
 		
 		var width = (Math.max(window.innerWidth)/10) * 7,
 	    height = 460,
@@ -59,7 +64,7 @@ var slider,
 			.size([width, height]);
 
 		var projection = d3.geo.mercator()
-			.scale((1 << 17) / 2 / Math.PI)
+			.scale((1 << 15) / 2 / Math.PI)
 			.translate([-width / 2, -height / 2]); // just temporary
 
 		var tileProjection = d3.geo.mercator();
@@ -69,14 +74,13 @@ var slider,
 		
 		var zoom = d3.behavior.zoom()
 			.scale(projection.scale() * 2 * Math.PI)
-			.scaleExtent([1 << 5, 1 << 25])
-			.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }))
-			.on("zoom", zoomed);
+			.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }));
+			// .on("zoom", zoomed);
 
-			var content =  d3.select("#content")
+		var content =  d3.select("#content")
 			.style("width", width + "px")
 			.style("height", height + "px")
-			// .call(zoom) //disabled zoom for now. though it would be nice to pan still.
+			// .call(zoom) //disabled zoom for now.
 			;
 				
 			var map = content.append("g")
@@ -85,7 +89,7 @@ var slider,
 			var points = content.append("svg")
 					.attr("id", "points")
 					
-			var story = d3.select("#story")
+		 	var story = d3.select("#story")
 			
 		  var layer = map.append("div")
 					    .attr("class", "layer")
@@ -97,13 +101,29 @@ var slider,
 			
 			var playbutton = slider.append("div")
 					.attr("id", "playbutton")
-					
-			zoomed();
-		// load data
-		d3.csv("data/gorse.csv",
+		
+				zoomed();
+		// load point data
+		d3.json("../data/1880_rail.json", function(error, rail){
+			var lines = content.append("svg")
+					.attr("class", "rail")
+			 		.style("width", width + "px")
+					.style("height", height + "px")
+					.selectAll(".rail")
+					.data(topojson.object(rail, rail.features).geometries)
+					.enter().append("path")
+					.attr("d", path);
+		});
+		d3.csv("../data/ice8.csv",
 			type,
 			function(error, data) {
 
+				data.forEach(function(d) {
+				    d.InfestedArea_squarem = +d.InfestedArea_squarem;
+				    d.GrossArea_acre = +d.GrossArea_acre;
+						d.Percent_Cover = +d.Percent_Cover;
+				  });
+				
 			dates = d3.set(data.map(function(d) {return d.Date;})).values().map(function(z) {return new Date(z);});
 
 			years = d3.set(data.map(function(d) {return +d.Date.getFullYear();})).values().map(function(z) {return +z;});
@@ -115,20 +135,20 @@ var slider,
 	      .attr("title","Play animation")
 	      .on("click",function(){
 	        if ( !pause ){
-	          pause = 1;
-	          d3.select(this).classed("pause",false).attr("title","Pause animation");
-	          pause=1;
-	        } else {
 	          pause = 0;
-	          d3.select(this).classed("pause",true).attr("title","Play animation");
+	          d3.select(this).classed("pause",false).attr("title","Pause animation");
 	          pause=0;
+	        } else {
+	          pause = 1;
+	          d3.select(this).classed("pause",true).attr("title","Play animation");
+	          pause=1;
 	        }
 	      });
 	
 			timescale
 				.rangeRound([0, width - 200])
 				.clamp(true)
-				.domain([new Date(minyr,0,1),new Date(maxyr,12,31)]);
+				.domain([new Date(minyr - 1,0,1),new Date(maxyr,12,31)]);
 
 			timeaxis = d3.svg.axis()		
 				.scale(timescale)
@@ -142,18 +162,18 @@ var slider,
 						
 			timer
 				.attr("class", "x axis")
-				.attr("transform","translate(" + 100 + "," + 50 + ")")
+				.attr("transform","translate(" + 100 + "," + 35 + ")")
 				.call(timeaxis)
 				.select(".domain")
 				
 			brush = d3.svg.brush()
 				.x(timescale)
 				.extent([0,0])
-				.on("brush",function() { //Now separate into mousedown -> clearInterval, drag -> animate, mouseup -> setInterval components
+				.on("brush",function() { 
 						var mouseval = timescale.invert(d3.mouse(this)[0]);
 						var val = new Date(mouseval.getFullYear(),12);
 						var strval = val.toISOString();
-						dateiter = dates.map(function(d) {return d.toISOString();}).indexOf(strval);
+						dateiterate = dates.map(function(d) {return d.toISOString();}).indexOf(strval);
 						brush.extent([val,val]);
 						handle.attr("cx",timescale(val));
 						handle.attr("transform","translate(" + timescale(val) + ",0)")
@@ -171,11 +191,8 @@ var slider,
 			slider.selectAll(".extent,.resize")
 				.remove();
 
-			dateiter = 0;
-
 			handle = slider .append("g")
-				.attr("class","handle preload")
-				.attr("transform","translate(0," + timescale(dates[0]) + ",0)");
+				.attr("class","handle preload");
 
 			handle.append("line")	
 					.attr("class","datemark outer preload");
@@ -203,34 +220,13 @@ var slider,
 					.attr("x1",0)
 					.attr("x2",0)
 					.attr("y1",10)
-					.attr("y2",230);
-			
-			dateiter = 0; // date incrementer - start
-	
-			loop = function(msg){
-				clearInterval(interval);
-				if ((timepause == 0 && pause == 0) || start == 0) {
-					update(data,dates[dateiterate]);
-					if (dateiterate < dates.length - 1) {++dateiterate;}
-					else {
-							dateiterate = 0;
-							timepause=1;
-							setTimeout(function(){timepause = 0;},100);
-							}
-				}
-				if (later.length > 0 ){ maprate = 2000;} else { maprate = 300;}
-				start = 1;
-				interval = setInterval(loop, maprate);
-			}
-
-			interval = setInterval(loop, maprate);
-
-
+					.attr("y2",250);
+						
 		// line chart			
 					var graph = d3.select("#graph")
 					
-					xScale = d3.scale.linear().range([100, width - 100]).domain([1942,2015]),	
-					yScale = d3.scale.linear().range([180, 20]).domain([0,130]),
+					xScale = d3.scale.linear().range([100, width - 100]).domain([1862,2015]),	
+					yScale = d3.scale.linear().range([180, 20]).domain([0,1100]),
 					
 					xAxis = d3.svg.axis().scale(xScale).tickFormat(d3.format('0f')),
 					yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
@@ -262,12 +258,12 @@ var slider,
 																		
 	 					var voronoi = d3.geom.voronoi()
 								.x(function(d) { return xScale(d.key); })
-								.y(function(d) { return yScale(d.values); });
+								.y(function(d) { return yScale(d.values); });							
 					
 						var line = d3.svg.line()
 		 			  		.x(function(d){return xScale(d.key);})
-								.y(function(d){return yScale(d.values);})
-								.interpolate('basis');
+								.y(function(d){return yScale(d.values);});
+								// .interpolate('basis');
 						
 						graph.append("g")
 						.attr("class", "species")
@@ -314,131 +310,161 @@ var slider,
 							    d3.select('.'+d.type).classed("line-hover", false);
 							    focus.attr("transform", "translate(-100,-100)");}
 							
-							console.log(taxon);
-		});			//end data callback
+									function update(data,date) {
+										yr = date.getFullYear(); // spits out the years for slider
 
-				
+										var usedat = data.filter(yrfilter(yr)); 
 
-function update(data,date) {
-	var yr = date.getFullYear(); // spits out the years for slider
-	
-	var usedat = data.filter(yrfilter(yr)); 
+										var curr = [timescale(date)];
 
-	var curr = [timescale(date)];
-	
-	handle
-		.transition(50)
-			.attr("transform",function(d) {return "translate(" + Math.floor(curr) + ",0)"});
+										handle
+											.transition(50)
+												.attr("transform",function(d) {return "translate(" + Math.floor(curr) + ",0)"});
 
-	timer.selectAll(".datemark,.handle") // point that moves on timer
-		.classed('preload',0);
-	
-	// timer.select(".datemark.label")
-	// 	.text(d3.time.format("%Y")(date));
+										timer.selectAll(".datemark,.handle") // point that moves on timer
+											.classed('preload',0);
+
+										d3.select(".year").text(d3.time.format("%Y")(date)); //big date next to slider
+
+										timer.select(".datemark.labelbox")
+											.attr("height", 50)
+											.attr("width", 50)
+											.attr("x", 5)
+											.attr("y",-12)
+											.style("fill-opacity",0);
+
+										var datapoints = d3.select("#points").selectAll("circle").data(data)
+										.enter()
+										.append("circle")
+										.attr("class", function(d){return "sighting " + d.Taxon + " " + d.Year});
+
+										// console.log("usedat: ", usedat.length); // shows number of observations in current year for all species
+										
+										// var socket = io();
+										// 
+										// socket.emit('message', usedat.length);
+										
+										var circles = d3.selectAll(".sighting")
+										.data(usedat, function(d) { return d ? d.x : this.id; }, 
+										              function(d) { return d ? d.y : this.id; });
+
+										circles
+										.transition()
+											.ease("linear")
+											.duration(150)
+											// .attr("r", 8)
+											// .attr("r", function(d){if (d.High_Plant == 1){
+											// 	return .000038*zoom.scale();}
+											//     else if ((d.High_Plant > 1 && d.High_Plant < 100) || (d.High_Plant == "1+")){return .000052*zoom.scale();}
+											// 		else if (d.High_Plant >= 100 && d.High_Plant < 1000){return .000070*zoom.scale();}
+											// 		else if(d.High_Plant >= 1000){return .0001*zoom.scale();}
+											// 		else if(d.High_Plant = 'origin'){return 6;}
+											// 		})
+											.attr("r", function(d){if (d.InfestedArea_squarem != NaN){
+															if (d.InfestedArea_squarem > 0 && d.InfestedArea_squarem < 500){return 4;}
+															else if (d.InfestedArea_squarem > 501 && d.InfestedArea_squarem < 2000){return 8;}
+															else if (d.InfestedArea_squarem > 2001){return 12;}
+															else{return 5;}
+													}
+													else if (d.GrossArea_acre != NaN){
+														if (d.GrossArea_acre > 0 && d.GrossArea_acre < 1000){return 16;}
+														else if (d.GrossArea_acre > 1001){return 32;}
+														else{return 5;}
+													}
+											})
+											.attr("cx", function(d) {return projection([d.y,d.x])[0]})
+											.attr("cy", function(d) {return projection([d.y,d.x])[1]})
+											.style("opacity", .9);
+
+											circles.exit().remove();
+
+
+											//load story data
+											d3.csv("../data/icestory8.csv", function(msg) {
+
+												msg.forEach(function(d) {
+												    d.duration = +d.duration;
+												    d.width = +d.width;
+												    d.height = +d.height;
+												    d.Year = +d.Year;
+														place = d.place;
+														newscale = +d.newscale;
+												  });
+												
+												now = msg.filter(yrfilter(yr));
+												nextyr = date.getFullYear() + 1;
+												later = msg.filter(yrfilter(nextyr));
+																								
+												var story = d3.select("#story").selectAll("rect").data(msg)
+															.enter()
+															.append("rect")
+															.attr("class", function(d){return "story " +d.Year});
+
+												var boxes = d3.selectAll(".story")
+												.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
+												           function(d) { return d ? d.y + "px" : this.id; });
+
+												boxes
+														.attr("x", function(d) {return d.x + "px"; })
+														.attr("rx", 5)
+														.attr("y", function(d) {return d.y + "px"; })
+														.attr("width", function(d) {return d.width})
+														.attr("height", function(d) {return d.height})
+														.style("fill", "#000")
+														.style("z-index", 400)
+														.style("opacity", .6);
+
+												boxes.exit().remove();
+
+												var text = d3.select("#story").selectAll("foreignObject").data(msg)
+														.enter()
+														.append("foreignObject")
+														.attr("class", function(d){return "text " +d.Year});
+
+												var narr = d3.selectAll(".text")
+														.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
+														           function(d) { return d ? d.y + "px" : this.id; });																			
+
+
+												narr
+															.attr("x", function(d) {return d.x - -20 + "px"; })
+															.attr("y", function(d) {return d.y - -20 + "px"; })
+															.attr("width", function(d) {return d.width - 40 + 'px'})
+															.attr("height", function(d) {return d.height - 20 + 'px'})
+															.append("xhtml:body")
+															.html(function(d){return d.story})
+															.style("color", "#ffffff");
+															
+												narr.exit().remove();
+															
+											});  // end story data callback
+
+
+									} //end update
+
+									loop = function(msg){
+										clearInterval(interval);
+										console.log(later);
+										if ((timepause == 0 && pause == 0) || start == 0) {
+											update(data,dates[dateiterate]);
+											if (dateiterate < dates.length - 1) {++dateiterate;}
+											else {
+													dateiterate = 0;
+													timepause=1;
+													setTimeout(function(){timepause = 0;},100);
+													}
+										}
+										if (later.length > 0 ){ maprate = 5000;} 
+										else { maprate = 300;}
+										start = 1;
+										interval = setInterval(loop, maprate);
+									}
+
+									interval = setInterval(loop, maprate);
+
+		});			//end point data callback
+
 		
-	d3.select(".year").text(d3.time.format("%Y")(date)); //big date next to slider
-	
-	timer.select(".datemark.labelbox")
-		.attr("height", 50)
-		.attr("width", 50)
-		.attr("x", 5)
-		.attr("y",-12)
-		.style("fill-opacity",0);
-	
-	var datapoints = d3.select("#points").selectAll("circle").data(data)
-	.enter()
-	.append("circle")
-	.attr("class", function(d){return "sighting " + d.Taxon + " " + d.Year});
-		
-	// console.log("usedat: ", usedat.length); // shows number of observations in current year for all species
-	
-	var socket = io();
-
-	socket.emit('message', usedat.length);
-	
-	var circles = d3.selectAll(".sighting")
-	.data(usedat, function(d) { return d ? d.x : this.id; }, 
-	              function(d) { return d ? d.y : this.id; });
-
-	circles
-	.transition()
-		.ease("linear")
-		.duration(50)
-		// .attr("r", 8)
-		.attr("r", function(d){if (d.High_Plant == 1){return .000038*zoom.scale();}
-		    else if ((d.High_Plant > 1 && d.High_Plant < 100) || (d.High_Plant == "1+")){return .000052*zoom.scale();}
-				else if (d.High_Plant >= 100 && d.High_Plant < 1000){return .000070*zoom.scale();}
-				else if(d.High_Plant >= 1000){return .0001*zoom.scale();}
-				else if(d.High_Plant = 'origin'){return 6;}
-				})
-		.attr("cx", function(d) {return projection([d.y,d.x])[0]})
-		.attr("cy", function(d) {return projection([d.y,d.x])[1]})
-		.style("opacity", 1);
-
-		circles.exit().remove();
-
-
-
-				d3.csv("data/gorsestory729.csv", function(msg) {
-
-					msg.forEach(function(d) {
-					    d.duration = +d.duration;
-					    d.width = +d.width;
-					    d.height = +d.height;
-					    d.Year = +d.Year;
-					  });
-
-					now = msg.filter(yrfilter(yr));
-					var nextyr = date.getFullYear() + 1; // spits out the years for slider
-					later = msg.filter(yrfilter(nextyr));
-
-					var story = d3.select("#story").selectAll("rect").data(msg)
-								.enter()
-								.append("rect")
-								.attr("class", function(d){return "story " +d.Year});
-
-					var boxes = d3.selectAll(".story")
-					.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-					           function(d) { return d ? d.y + "px" : this.id; });
-
-					boxes
-							.attr("x", function(d) {return d.x + "px"; })
-							.attr("rx", 5)
-							.attr("y", function(d) {return d.y + "px"; })
-							.attr("width", function(d) {return d.width})
-							.attr("height", function(d) {return d.height})
-							.style("fill", "#000")
-							.style("z-index", 400)
-							.style("opacity", .6);
-
-							 	 	  boxes.exit().remove();
-
-					var text = d3.select("#story").selectAll("foreignObject").data(msg)
-							.enter()
-							.append("foreignObject")
-							.attr("class", function(d){return "text " +d.Year});
-
-					var narr = d3.selectAll(".text")
-							.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-							           function(d) { return d ? d.y + "px" : this.id; },
-												function(d) { return d.duration });
-
-
-					narr
-								.attr("x", function(d) {return d.x - -20 + "px"; })
-								.attr("y", function(d) {return d.y - -20 + "px"; })
-								.attr("width", function(d) {return d.width - 40 + 'px'})
-								.attr("height", function(d) {return d.height - 20 + 'px'})
-								.append("xhtml:body")
-								.html(function(d){return d.story})
-								.style("color", "#ffffff")
-								narr.exit().remove();
-				});
-
-
-		} //end update
-
-
 //Filter by year.
 function yrfilter(year) {
 	return function(element) {
@@ -495,7 +521,7 @@ function formatLocation(p, k) {
        + (p[0] < 0 ? format(-p[0]) + "°W" : format(p[0]) + "°E");
 }
 
-//zoom buttons
+//zoom buttons, not being used right now
 
 function interpolateZoom (translate, scale) {
     var self = this;
@@ -510,7 +536,7 @@ function interpolateZoom (translate, scale) {
         };
     });
 }
-function zoomClick() {
+function zoomClick() { // also not being used right now
     var clicked = d3.event.target,
         direction = 1,
         factor = 0.2,

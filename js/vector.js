@@ -1,56 +1,30 @@
-document.onkeydown = checkKey;
+	//Speed & animation-control variables
+	var maprate,
+	  pause=1, // don't automatically start
+    timepause=0,
+		start = 0,
+		interval,
+		loop,
+		dateiterate;
 
-function checkKey(e) {
+	//Data parameter variables
+	var minyr,
+		maxyr,
+		dates,
+		years;
 
-    e = e || window.event;
-
-    if (e.keyCode == '65') {
-        // up arrow
-				var obj = $("a.akey");
-	      window.open(obj.attr("href"),"_self");
-    }
-    else if (e.keyCode == '67') {
-       // left arrow
-				var obj = $("a.ckey");
-	      window.open(obj.attr("href"),"_self");
-    }
-    else if (e.keyCode == '72') {
-       // right arrow
-				var obj = $("a.hkey");
-	      window.open(obj.attr("href"),"_self");
-    }
-
-}
-
-//Animation variables
-var maprate,
-  pause=0, // automatically start
-  timepause=0,
-	start = 0,
-	now = 0,
-	later = 0,
-	interval,
-	loop,
-	dateiterate = 0;
-
-//Date variables
-var minyr,
-	maxyr,
-	dates,
-	years;
-
-//Slider variables
-var slider,
-	handle,
-	brush,
-	timer,
-	timeaxis,
-	timescale = d3.time.scale(),
-	datemark;
+	//Selection variables
+	var slider,
+		handle,
+		brush,
+		timer,
+		timeaxis,
+		timescale = d3.time.scale(),
+		datemark;
 		
 		var timepad = 100; //bottom padding for slider
 		
-		var width = (Math.max(window.innerWidth)/10) * 7,
+		var width = Math.max(window.innerWidth),
 	    height = 460,
 	    prefix = prefixMatch(["webkit", "ms", "Moz", "O"]);
 
@@ -73,7 +47,8 @@ var slider,
 			.translate(projection([-122.412022,37.649117]).map(function(x) { return -x; }))
 			.on("zoom", zoomed);
 
-			var content =  d3.select("#content")
+		var content =  d3.select("#container").append("div")
+      .attr("id", "content")
 			.style("width", width + "px")
 			.style("height", height + "px")
 			// .call(zoom) //disabled zoom for now. though it would be nice to pan still.
@@ -85,7 +60,8 @@ var slider,
 			var points = content.append("svg")
 					.attr("id", "points")
 					
-			var story = d3.select("#story")
+		 	var story = content.append("svg")
+					.attr("id", "story")
 			
 		  var layer = map.append("div")
 					    .attr("class", "layer")
@@ -100,10 +76,16 @@ var slider,
 					
 			zoomed();
 		// load data
-		d3.csv("data/gorse.csv",
+		d3.csv("data/ice729.csv",
 			type,
 			function(error, data) {
 
+				data.forEach(function(d) {
+				    d.InfestedArea_squarem = +d.InfestedArea_squarem;
+				    d.GrossArea_acre = +d.GrossArea_acre;
+						d.Percent_Cover = +d.Percent_Cover;
+				  });
+				
 			dates = d3.set(data.map(function(d) {return d.Date;})).values().map(function(z) {return new Date(z);});
 
 			years = d3.set(data.map(function(d) {return +d.Date.getFullYear();})).values().map(function(z) {return +z;});
@@ -126,7 +108,7 @@ var slider,
 	      });
 	
 			timescale
-				.rangeRound([0, width - 200])
+				.rangeRound([0, 900])
 				.clamp(true)
 				.domain([new Date(minyr,0,1),new Date(maxyr,12,31)]);
 
@@ -149,11 +131,11 @@ var slider,
 			brush = d3.svg.brush()
 				.x(timescale)
 				.extent([0,0])
-				.on("brush",function() { //Now separate into mousedown -> clearInterval, drag -> animate, mouseup -> setInterval components
+				.on("brush",function() { 
 						var mouseval = timescale.invert(d3.mouse(this)[0]);
 						var val = new Date(mouseval.getFullYear(),12);
 						var strval = val.toISOString();
-						dateiter = dates.map(function(d) {return d.toISOString();}).indexOf(strval);
+						dateiterate = dates.map(function(d) {return d.toISOString();}).indexOf(strval);
 						brush.extent([val,val]);
 						handle.attr("cx",timescale(val));
 						handle.attr("transform","translate(" + timescale(val) + ",0)")
@@ -171,11 +153,8 @@ var slider,
 			slider.selectAll(".extent,.resize")
 				.remove();
 
-			dateiter = 0;
-
 			handle = slider .append("g")
-				.attr("class","handle preload")
-				.attr("transform","translate(0," + timescale(dates[0]) + ",0)");
+				.attr("class","handle preload");
 
 			handle.append("line")	
 					.attr("class","datemark outer preload");
@@ -203,11 +182,14 @@ var slider,
 					.attr("x1",0)
 					.attr("x2",0)
 					.attr("y1",10)
-					.attr("y2",230);
+					.attr("y2",250);
 			
-			dateiter = 0; // date incrementer - start
-	
-			loop = function(msg){
+			dateiterate = 0; // date incrementer - start
+			
+			// var rate = function(){ if (now.length > 0 ){ return maprate = 1800;} else {return maprate = 700;}}
+			maprate = 600;
+			
+			loop = function(){
 				clearInterval(interval);
 				if ((timepause == 0 && pause == 0) || start == 0) {
 					update(data,dates[dateiterate]);
@@ -218,7 +200,8 @@ var slider,
 							setTimeout(function(){timepause = 0;},100);
 							}
 				}
-				if (later.length > 0 ){ maprate = 2000;} else { maprate = 300;}
+				// if (now.length > 0 ){ maprate = 1800;} else { maprate = 700;} //now is not defined
+
 				start = 1;
 				interval = setInterval(loop, maprate);
 			}
@@ -229,8 +212,8 @@ var slider,
 		// line chart			
 					var graph = d3.select("#graph")
 					
-					xScale = d3.scale.linear().range([100, width - 100]).domain([1942,2015]),	
-					yScale = d3.scale.linear().range([180, 20]).domain([0,130]),
+					xScale = d3.scale.linear().range([100, 980]).domain([1958,2015]),	
+					yScale = d3.scale.linear().range([180, 20]).domain([0,900]),
 					
 					xAxis = d3.svg.axis().scale(xScale).tickFormat(d3.format('0f')),
 					yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
@@ -314,14 +297,13 @@ var slider,
 							    d3.select('.'+d.type).classed("line-hover", false);
 							    focus.attr("transform", "translate(-100,-100)");}
 							
-							console.log(taxon);
 		});			//end data callback
 
 				
 
 function update(data,date) {
 	var yr = date.getFullYear(); // spits out the years for slider
-	
+
 	var usedat = data.filter(yrfilter(yr)); 
 
 	var curr = [timescale(date)];
@@ -350,12 +332,6 @@ function update(data,date) {
 	.append("circle")
 	.attr("class", function(d){return "sighting " + d.Taxon + " " + d.Year});
 		
-	// console.log("usedat: ", usedat.length); // shows number of observations in current year for all species
-	
-	var socket = io();
-
-	socket.emit('message', usedat.length);
-	
 	var circles = d3.selectAll(".sighting")
 	.data(usedat, function(d) { return d ? d.x : this.id; }, 
 	              function(d) { return d ? d.y : this.id; });
@@ -379,64 +355,62 @@ function update(data,date) {
 
 
 
-				d3.csv("data/gorsestory729.csv", function(msg) {
+		d3.csv("../data/icestory729.csv", function(msg) {
+			
+			msg.forEach(function(d) {
+			    d.duration = +d.duration;
+			    d.width = +d.width;
+			    d.height = +d.height;
+			    d.Year = +d.Year;
+			  });
+						
+			var now = msg.filter(yrfilter(yr)); 
+			
+			var story = d3.select("#story").selectAll("rect").data(msg)
+						.enter()
+						.append("rect")
+						.attr("class", function(d){return "story " +d.Year});
+						
+			var boxes = d3.selectAll(".story")
+			.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
+			           function(d) { return d ? d.y + "px" : this.id; });
 
-					msg.forEach(function(d) {
-					    d.duration = +d.duration;
-					    d.width = +d.width;
-					    d.height = +d.height;
-					    d.Year = +d.Year;
-					  });
-
-					now = msg.filter(yrfilter(yr));
-					var nextyr = date.getFullYear() + 1; // spits out the years for slider
-					later = msg.filter(yrfilter(nextyr));
-
-					var story = d3.select("#story").selectAll("rect").data(msg)
-								.enter()
-								.append("rect")
-								.attr("class", function(d){return "story " +d.Year});
-
-					var boxes = d3.selectAll(".story")
+			boxes
+					.attr("x", function(d) {return d.x + "px"; })
+					.attr("rx", 5)
+					.attr("y", function(d) {return d.y + "px"; })
+					.attr("width", function(d) {return d.width})
+					.attr("height", function(d) {return d.height})
+					.style("fill", "#000")
+					.style("z-index", 400)
+					.style("opacity", .6);
+			
+					 	 	  boxes.exit().remove();
+		
+			var text = d3.select("#story").selectAll("foreignObject").data(msg)
+					.enter()
+					.append("foreignObject")
+					.attr("class", function(d){return "text " +d.Year});
+					
+			var narr = d3.selectAll(".text")
 					.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-					           function(d) { return d ? d.y + "px" : this.id; });
+					           function(d) { return d ? d.y + "px" : this.id; },
+										function(d) { return d.duration });
+					
+					
+			narr
+						.attr("x", function(d) {return d.x - -20 + "px"; })
+						.attr("y", function(d) {return d.y - -20 + "px"; })
+						.attr("width", function(d) {return d.width - 20 + 'px'})
+						.attr("height", function(d) {return d.height - 20 + 'px'})
+						.append("xhtml:body")
+						.html(function(d){return d.story})
+						.style("color", "#ffffff")
+						narr.exit().remove();
+		});
+		
 
-					boxes
-							.attr("x", function(d) {return d.x + "px"; })
-							.attr("rx", 5)
-							.attr("y", function(d) {return d.y + "px"; })
-							.attr("width", function(d) {return d.width})
-							.attr("height", function(d) {return d.height})
-							.style("fill", "#000")
-							.style("z-index", 400)
-							.style("opacity", .6);
-
-							 	 	  boxes.exit().remove();
-
-					var text = d3.select("#story").selectAll("foreignObject").data(msg)
-							.enter()
-							.append("foreignObject")
-							.attr("class", function(d){return "text " +d.Year});
-
-					var narr = d3.selectAll(".text")
-							.data(now, function(d) { return d ? d.x + "px" : this.id; }, 
-							           function(d) { return d ? d.y + "px" : this.id; },
-												function(d) { return d.duration });
-
-
-					narr
-								.attr("x", function(d) {return d.x - -20 + "px"; })
-								.attr("y", function(d) {return d.y - -20 + "px"; })
-								.attr("width", function(d) {return d.width - 40 + 'px'})
-								.attr("height", function(d) {return d.height - 20 + 'px'})
-								.append("xhtml:body")
-								.html(function(d){return d.story})
-								.style("color", "#ffffff")
-								narr.exit().remove();
-				});
-
-
-		} //end update
+} //end update
 
 
 //Filter by year.
@@ -453,7 +427,7 @@ function type(d) {
 }	
 		
 //map functions
-function zoomed() {
+function zoomed(data) {
   var tiles = tile
       .scale(zoom.scale())
       .translate(zoom.translate())
@@ -463,20 +437,64 @@ function zoomed() {
       .scale(zoom.scale() / 2 / Math.PI)
       .translate(zoom.translate());
 
-		var image = layer
-				.style(prefix + "transform", matrix3d(tiles.scale, tiles.translate))
-				.selectAll(".tile")
-				.data(tiles, function(d) { return d; });
+var circles = d3.selectAll("circle")
+							// .attr("cx", function(d) {return projection([d.y,d.x])[0]})
+							// .attr("cy", function(d) {return projection([d.y,d.x])[1]});
 
-				image.exit()
-				.remove();
+var image = layer
+      .style(prefix + "transform", matrix3d(tiles.scale, tiles.translate))
+    .selectAll(".tile")
+      .data(tiles, function(d) { return d; });
 
-				image.enter().append("img")
-				.attr("class", "tile")
-				.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.385a35cf/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
-				.style("left", function(d) { return (d[0] << 8) + "px"; })
-				.style("top", function(d) { return (d[1] << 8) + "px"; });
-};
+  image.exit()
+  		.each(function(d) { this._xhr.abort(); })
+      .remove();
+			  var layers = ['water', 'landuse', 'roads'];
+
+			  image.enter().append("svg")
+			      .attr("class", "tile")
+			      .style("left", function(d) { return d[0] * 256 + "px"; })
+			      .style("top", function(d) { return d[1] * 256 + "px"; })
+			      .each(function(d) {
+			        var map = d3.select(this);
+					    this._xhr = d3.xhr("https://vector.mapzen.com/osm/all/" + d[2] + "/" + d[0] + "/" + d[1] + ".mvt?api_key=vector-tiles-ukoFC5k").responseType('arraybuffer').get(function(error, json) {
+
+					      var tile = new VectorTile( new pbf( new Uint8Array(json.response) ) );
+					      var extents = 4096;
+
+					      var data = {};
+
+					      for (var key in tile.layers) {
+					        data[key] = tile.layers[key].toGeoJSON();
+					      }
+
+					      var tile_projection = d3.geo.transform({
+					        point: function(x, y) {
+					          x = x/extents*256;
+					          y = y/extents*256;
+
+					          this.stream.point(x, y);
+					        }
+					      })
+
+					      var tilePath = d3.geo.path()
+					      .projection(tile_projection)
+
+					      layers.forEach(function(layer){
+					        var layer_data = data[layer];
+
+					        if (layer_data) {
+					          map.selectAll("path")
+					            .data(layer_data.features.sort(function(a, b) { return a.properties.sort_key ? a.properties.sort_key - b.properties.sort_key : 0 }))
+					          .enter().append("path")
+					            .attr("class", function(d) { var kind = d.properties.kind || ''; return layer + '-layer ' + kind; })
+					            .attr("d", tilePath );
+					        }
+					      });
+					    });
+						});
+			};
+
 
 function matrix3d(scale, translate) {
   var k = scale / 256, r = scale % 1 ? Number : Math.round;
