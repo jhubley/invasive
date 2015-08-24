@@ -37,14 +37,14 @@ h1{
 	float:none;
 }
 #header h2{
-	font-size:16px;
-	padding-top:34px;
-	float:right;
-	padding-right:30px;
-	font-style:italic;
-	text-transform:lowercase;
-	text-shadow: 1px 1px 5px #000;
-	margin:0px;
+	font-size: 16px;
+	    padding-top: 29px;
+	    float: left;
+	    padding-right: 30px;
+	    font-style: italic;
+	    text-transform: lowercase;
+	    text-shadow: 1px 1px 5px #000;
+	    margin-left: -18px;
 }
 
 #rightpanel h2{
@@ -117,7 +117,8 @@ h4{
 #story{
 	width:100%;
 	z-index:101;
-	font-size:14px;
+	font-size:15px;
+	line-height:130%;
 }
 #story img{
 	margin:5px 0px;
@@ -189,6 +190,7 @@ h4{
 	border-right:1px solid #666;
 	text-transform:uppercase;
 	color:#999;
+  margin-right: -4px;
 }
 #menu ul li.first{
 	padding:10px 20px 10px 35px;
@@ -391,7 +393,7 @@ text.datemark.label {
 
 #note{
 	width:100%;
-	height:100%;
+	height:85%;
 	position:absolute;
 	top:0;
 	left:0;

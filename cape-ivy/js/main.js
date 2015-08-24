@@ -1,21 +1,27 @@
 document.onkeydown = checkKey;
 
+// A - blue wire, 65 #0, Ice Plant
+// J - black wire, 74 #9, Gorse
+// C - red wire, 67 #2, Cape Ivy
+// L - green wire, 76 #11, Scotch Broom
+
 function checkKey(e) {
     e = e || window.event;
 
-		if (e.keyCode == '66') {
-        // down arrow
-				var obj = $("a.bkey");
+		if (e.keyCode == '65') {
+				var obj = $("a.akey");
 	      window.open(obj.attr("href"),"_self");
     }
     else if (e.keyCode == '67') {
-       // left arrow
 				var obj = $("a.ckey");
 	      window.open(obj.attr("href"),"_self");
     }
-    else if (e.keyCode == '72') {
-       // right arrow
-				var obj = $("a.hkey");
+    else if (e.keyCode == '74') {
+				var obj = $("a.jkey");
+	      window.open(obj.attr("href"),"_self");
+    }
+    else if (e.keyCode == '76') {
+				var obj = $("a.lkey");
 	      window.open(obj.attr("href"),"_self");
     }
 }
@@ -54,7 +60,7 @@ function checkKey(e) {
 		funston = [-122.502771, 37.715402],
 		reyes = [-122.861938, 38.041614];
 		
-		var width = (Math.max(window.innerWidth)/10) * 7,
+		var width = (Math.max(window.innerWidth)/10) * 6.92,
 	    height = 550,
 	    prefix = prefixMatch(["webkit", "ms", "Moz", "O"]);
 
@@ -108,7 +114,7 @@ function checkKey(e) {
 				zoomed();
 				
 		// load species observation data
-		d3.csv("data/pepperweed.csv",
+		d3.csv("data/capeivy.csv",
 			type,
 			function(error, data) {
 
@@ -124,7 +130,7 @@ function checkKey(e) {
 									
 			minyr = d3.min(years);
 			maxyr = d3.max(years);
-console.log(minyr);
+
 			d3.select("#play")
 	      .attr("title","Play animation")
 	      .on("click",function(){
@@ -141,7 +147,7 @@ console.log(minyr);
 	
 			timescale
 				.rangeRound([0, width - 200])
-				.domain([new Date(minyr,0,1),new Date(maxyr,12,31)]);
+				.domain([new Date(minyr - 1,0,1),new Date(maxyr,12,31)]);
 
 			timeaxis = d3.svg.axis()		
 				.scale(timescale)
@@ -216,8 +222,8 @@ console.log(minyr);
 					// line chart			
 					var graph = d3.select("#graph")
 					
-					xScale = d3.scale.linear().range([100, width - 100]).domain([minyr,maxyr]),	
-					yScale = d3.scale.linear().range([180, 20]).domain([0,1000]),
+					xScale = d3.scale.linear().range([100, width - 100]).domain([minyr - 1,maxyr]),	
+					yScale = d3.scale.linear().range([180, 20]).domain([0,130]),
 					
 					xAxis = d3.svg.axis().scale(xScale).tickFormat(d3.format('0f')),
 					yAxis = d3.svg.axis().scale(yScale).orient("left").ticks(5);
@@ -294,14 +300,14 @@ console.log(minyr);
 						function mouseover(d) {
 							    d3.select('.'+d.type).classed("line-hover", true);
 							    focus.attr("transform", "translate(" + xScale(d.key) + "," + yScale(d.values) + ")");
-							    focus.select("text").text(d.key + ": " + d.values + " observations");}
+							    focus.select("text").text(d.key + ": " + d.values + " ");}
 
 						function mouseout(d) {
 							    d3.select('.'+d.type).classed("line-hover", false);
 							    focus.attr("transform", "translate(-100,-100)");}
 							
 							// load story data
-							d3.csv("data/pepperstory729.csv", function(msg) {
+							d3.csv("data/capeivystory.csv", function(msg) {
 
 									msg.forEach(function(d, i) {
 										d.duration = +d.duration;
@@ -312,7 +318,7 @@ console.log(minyr);
 										d.newscale = +d.newscale;
 									});
 																				
-									d3.csv("data/pepperweedstorylabels.csv", function(lab) {
+									d3.csv("data/capeivystorylabels.csv", function(lab) {
 
 									lab.forEach(function(d,i){
 										d.width = +d.width;
@@ -500,7 +506,7 @@ function yrfilter(year) {
 
 function type(d) {
 			d.Year = +d.Year; 
-			d.Date = new Date(d.Year,12);
+			d.Date = new Date(d.Year,12,01);
 			return d;
 }	
 		
@@ -525,7 +531,7 @@ function zoomed() {
 
 				image.enter().append("img")
 				.attr("class", "tile")
-				.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.385a35cf/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
+				.attr("src", function(d) { return "http://" + ["a", "b", "c", "d"][Math.random() * 4 | 0] + ".tiles.mapbox.com/v3/jhubley.2bcc6358/" + d[2] + "/" + d[0] + "/" + d[1] + ".png"; })
 				.style("left", function(d) { return (d[0] << 8) + "px"; })
 				.style("top", function(d) { return (d[1] << 8) + "px"; });
 };
