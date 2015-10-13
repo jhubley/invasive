@@ -8,4 +8,4 @@ To run this project with touch, you'll need an Arduino Leonardo with an MPR 121 
 
 To run this project on the web, just use the /public folder and comment out references to socket.io
 
-It can also be viewed at invasivericochet.com
+It can also be viewed at [invasiverichochet.com](http://www.invasivericochet.com)
