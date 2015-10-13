@@ -1,0 +1,655 @@
+html{
+	background:#111;
+}
+body,p {
+	font-family:Helvetica, Arial, sans-serif;
+	margin:0;
+}
+
+a{
+	color:#dde7ff;
+	text-decoration:none;
+}
+
+a:hover{
+	color:#dddeff;
+	text-decoration:none;
+}
+
+h1{
+	margin:0;
+	padding:20px 30px 10px;
+	font-size:25px;
+	font-weight:normal;
+	text-transform:uppercase;
+	font-family: 'Montserrat', sans-serif;
+	text-shadow: 1px 1px 5px #000;
+	width:265px;
+	float:left;
+}
+
+#story h1{
+	padding:0px;
+	font-size:23px;
+	font-family:Helvetica, Arial, sans-serif;
+	font-weight:normal;
+	text-transform:none;
+	float:none;
+}
+#header h2{
+	font-size: 16px;
+	    padding-top: 29px;
+	    float: left;
+	    padding-right: 30px;
+	    font-style: italic;
+	    text-transform: lowercase;
+	    text-shadow: 1px 1px 5px #000;
+	    margin-left: -18px;
+}
+
+#rightpanel h2{
+	text-shadow: 1px 1px 5px #000;
+	color:#fff;
+	padding-bottom:10px;
+	font-weight:normal;
+	font-size:23px;
+}
+h2{
+	font-weight:normal;
+	font-size:19px;
+	margin:0px;
+}
+
+h4{
+	font-weight:normal;
+	margin:0px;
+	font-size:16px;
+}
+
+/*-- main structure --*/
+#container{
+	height:100vh;
+}
+
+#leftcontainer {
+  margin:0;
+	float:left;
+	width:70%;
+}
+
+#rightcontainer {
+	width:30%;
+  margin:0;
+	float:right;
+	background:#111;
+	height:100vh;
+	min-height:700px;
+}
+
+#rightpanel{
+	padding:25px 30px;
+}
+#rightpanel #story{
+	font-size:16px;
+}
+
+#content {
+  position: relative;
+  overflow: hidden;
+}
+
+#map{
+	width:100%;
+	height:100%;
+}
+
+#slider{
+	position:relative;
+	z-index:10000;
+	width:100%;
+	height:80px;
+	margin-top:-80px;
+	background-color:rgba(222,238,238,.7);
+}
+
+#points{
+	width:100%;
+	height:100%;
+	position:relative;
+	z-index:100;
+}
+
+#story{
+	width:100%;
+	z-index:101;
+	font-size:15px;
+	line-height:130%;
+}
+#story img{
+	margin:5px 0px;
+	width:100%;
+	height:auto;
+}
+.layer {
+  position: absolute;
+}
+
+.tile {
+  pointer-events: none;
+  position: absolute;
+  width: 256px;
+  height: 256px;
+}
+
+.tile path {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.tile .major_road { stroke: #776; }
+.tile .minor_road { stroke: #ccb; }
+.tile .highway { stroke: #f39; stroke-width: 1.5px; }
+.tile .rail { stroke: #ff0000; }
+.tile .name{ fill: #ff0000; font-size: 15px; }
+
+
+.tile .water, .tile .ocean { fill: #877878; stroke: #877878; }
+.tile .water-layer, .tile .river, .tile .stream, .tile .canal { stroke: #877878; stroke-width: 1.5px;}
+.tile .riverbank { fill: #877878; }
+
+.tile .park, .tile .nature_reserve, .tile .wood, .tile .protected-land {fill: #5c354c; stroke:none;}
+
+/*-- header and menu --*/
+
+#header{
+	background:#000 url('../img/headerbg.png') repeat-x;
+	color:#fff;
+}
+
+#menu{
+	clear:both;
+	width:100%;
+	height:28px;
+	padding-top:10px;
+	background: #361126;
+	font-family: 'Montserrat', sans-serif;
+}
+#menu ul{
+	margin:0;
+	padding:0px 0px 0px 0px;
+}
+#menu li.active a{
+	color:#fff;
+	text-decoration:none;
+}
+
+#menu li a{
+	color:#999;
+	text-decoration:none;
+}
+#menu ul li{
+	display:inline;
+	padding:10px 20px;
+	border-right:1px solid #666;
+	text-transform:uppercase;
+	color:#999;
+  margin-right: -4px;
+}
+#menu ul li.first{
+	padding:10px 20px 10px 35px;
+}
+#menu ul li.active,
+#menu ul li.active:hover{
+	color:#fff;
+	background: #19b4b4;
+}
+#menu ul li:hover{
+	background: #733258;
+	color:#fff;
+	cursor:pointer;
+}
+#breadcrumb{
+	position: absolute;
+  top: 0;
+	background: #000;
+	padding: 10px 20px;
+  right: 10px;
+	font-size: 14px;
+}
+#breadcrumb.active{
+	color:#19b4b4;
+}
+#breadcrumb a{
+	color:#efefef;
+}
+#breadcrumb a:hover{
+	color:#a35c86;
+}
+
+/*-- about --*/
+#about{
+	font-family:Helvetica, Arial, sans-serif;
+	font-size:15.5px;
+	line-height:125%;
+	background:#000;
+	color:#fff;
+	padding-top:50px;
+	padding-bottom:20px;
+}
+#about p{
+	padding:10px 40px;
+}
+.credit{
+	font-size:14px;
+	padding-bottom:50px;
+}
+/*-- MAP --*/
+
+#zoom{
+	position:absolute;
+	height:30px;
+	z-index:150;
+	padding:20px 20px 0px 20px;
+}
+
+button#zoom_out,
+button#zoom_in {
+	width: 28px;
+	height:25px;
+	font-size:16px;
+	float:right;
+	margin-left:5px;
+}
+
+.sighting{
+	fill: #ff0000;
+	opacity: 0;
+}
+
+/*-- TIME SLIDER --*/
+#play{
+	display: inline-block;
+	vertical-align: middle;
+	margin-top: 10px;
+	width: 53px;
+  height: 53px;
+  background-image: url(../img/play.png);
+  border-radius: 5px;
+  cursor: pointer;
+  position: absolute;
+  z-index: 2000;
+	top: 5px;
+  left: 20px;
+}
+#play:hover{
+  background-position: 0 -53px;
+}
+
+#play.pause{
+  background-image: url(../img/pause.png);
+}
+#playbutton{
+	width:45px;
+	height:45px;
+	border-radius:5px;
+	background:#fff;
+	position:absolute;
+	top:18px;
+	left:25px;
+	z-index:1000;
+}
+#sliderbox {
+  position: absolute;
+  z-index: 114;
+  width: 100%;
+  top: 0;
+  left: 0;
+  height: 300px;
+}
+.year{
+	position:absolute;
+	z-index:200;
+	top:20px;
+	margin-left: 20px;
+	font-size: 28px;
+	font-family: Helvetica, Arial, sans-serif;
+}
+text.datemark.label {
+	fill: #222;
+}
+
+.datemark.label {
+	font-size: 18px;
+	font-weight: 400;
+}
+
+.yearlabel {
+	font: 8px;
+	fill-opacity: 1;
+	color: #fff;
+}
+
+.axis path,
+.axis line {
+	fill: #888888;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+.x.axis{
+	position:absolute;
+	top:0;
+	width:100%;
+	height:200px;
+	left:0;
+}
+
+.x.axis .domain {
+	fill: none;
+	stroke: #888;
+	stroke-width: 8px;
+	stroke-linecap: round;
+}
+
+.axis .yearmark {
+	stroke-width: 6px;
+	stroke-linecap: round;
+}
+
+.datemark {
+	color: rgb(256,256,256);
+	stroke-opacity: 1;
+}
+
+.datemark.outer {
+	stroke-width: 10px;
+	stroke: #333;
+	stroke-linecap: square;
+}
+
+.datemark.inner {
+	stroke-width: 10px;
+	stroke: #333;
+	stroke-linecap: square;
+}
+
+.datemark.center {
+	stroke-width: 1px;
+	stroke: #fff;
+}
+
+.preload {
+	fill-opacity: .000001;
+	stroke-opacity: .000001;
+}
+
+.datemark.labelbox {
+	stroke-width: 0 ;
+	fill: rgba(0,0,0,0.8);
+}
+
+.tick{
+	fill:#000;
+	font-weight: lighter;
+}
+
+.focus text {
+  text-anchor: middle;
+  fill: white;
+}
+
+.voronoi path {
+  fill: none;
+  pointer-events: all;
+}
+/*-- INFO BOXES --*/
+#infobox{
+	background:#333;
+	opacity:.5;
+	padding:10px;
+	border-radius:5px;
+	position:absolute;
+	top:210px;
+	left:220px;
+	z-index:1000;
+	width:200px;
+	height:250px;
+}
+#info{
+	font-size:14px;
+	color:#fff;
+  opacity:1;	
+	position:absolute;
+	top:230px;
+	left:240px;
+	z-index:10000;
+}
+#story .text{
+/*	background: #333;
+	padding:20px;
+*/}
+
+#note{
+	width:100%;
+	height:85%;
+	position:absolute;
+	top:0;
+	left:0;
+	z-index:20000;
+}
+
+.placetext{
+	font-size:13px;
+}
+
+/*-- CROSSFILTER CHART --*/
+
+#crossfilter{
+	position:relative;
+	clear:left;
+	background:#333 url("../img/footerbg.png") repeat;
+	width:100%;
+	height:240px;
+	padding:20px 0px 0px 0px;
+}
+
+#graph{
+  width: 100%;
+  height: 200px;
+  position: absolute;
+  z-index: 20000;
+  padding-top: 27px;
+  top: 0;
+}
+
+#graph .axis path,
+#graph .x.axis path {
+    fill: none;
+    stroke: #666;
+		stroke-width:1;
+}
+
+#graph .x.axis text{
+	display:none;
+}
+
+#graph .axis text {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 13px;
+		fill:#eee;
+}
+#graphlabel{
+	position:absolute;
+	bottom:10px;
+	left:80px;
+	color:#fff;
+	font-weight:normal;
+	font-size:12px;
+}
+.graphindicator{
+	stroke-width:1;
+	stroke:#eee !important;
+	stroke-dasharray:4,5;
+}
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.focus circle {
+  fill: #fff;
+  stroke: none;
+}
+
+.line {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-width: 1.5px;
+	opacity:.5;
+}
+
+.line-hover {
+  stroke-width:2;
+	opacity:1;
+}
+
+.voronoi path {
+  fill: none;
+  pointer-events: all;
+}
+.Cordylanthus,
+.Trifolium,
+.Baccharis,
+.Salvia.mellifera,
+.Elymus{
+	stroke: #00cab5;
+}
+.Symphyotrichum,
+.Layia{
+	stroke:#00de2a;
+}
+.Spartina.foliosa{
+	stroke: #00cab5;
+}
+.Salicornia{
+	stroke:#00de2a;
+}
+.Cirsium, 
+.Charadrius{
+	stroke:#acd0e2;
+}
+.Chloropyron, 
+.Rallus,
+.Nassella,
+.Artemisia.californica,
+.Artemisia.douglasiana{
+	stroke:#0080ca;
+}
+.Aster, .Riparia, .Uta{
+	stroke:#fff000;
+}
+.Eriogonum{
+	stroke: #8cae5c;
+}
+circle.Spartina.foliosa,
+circle.Trifolium,
+circle.Baccharis,
+circle.Salvia.mellifera,
+circle.Elymus{
+	fill: #00cab5;
+}
+circle.Charadrius{
+	fill:#acd0e2;
+}
+circle.Salicornia{
+	fill:#00de2a;
+}
+circle.Chloropyron, 
+circle.Rallus,
+circle.Nassella,
+circle.Artemisia.californica,
+circle.Artemisia.douglasiana{
+	fill:#0080ca;
+}
+circle.Layia{
+	fill:#00de2a;
+}
+circle.Eriogonum{
+	fill: #8cae5c;
+}
+circle.Riparia,
+circle.Uta{
+	fill:#fff000;
+}
+circle.Lepidium,
+circle.Carpobrotus,
+circle.FOENICULUM,
+circle.Foeniculum,
+circle.Ulex,
+circle.Cytisus,
+circle.Delairea{
+	fill:#ff1100;
+}
+path.Ulex,
+path.Carpobrotus,
+path.FOENICULUM,
+path.Foeniculum,
+path.Lepidium,
+path.Cytisus,
+path.Delairea{
+	stroke:#ff1100;
+}
+circle.Spartina.alterniflora{
+	fill:#ff1100;
+}
+path.Spartina.alterniflora{
+	stroke:#ff1100;
+}
+/*-- Legend --*/
+#legend{
+	position:absolute;
+  z-index: 10000;
+  color: #fff;
+  font-size: 14px;
+  width: 100%;
+  height: 230px;
+  bottom: 0px;
+	right:0px;
+	width:30%;
+}
+#legend h3{
+	font-weight:normal;
+  text-transform: uppercase;
+  color: #999;
+	padding:6px 0px 6px 30px;
+	margin-bottom: 20px;
+	font-family: 'Montserrat', sans-serif;
+	background: #361126;
+}
+#labels{
+	padding-left:30px;
+	width:100px;
+	float:left;
+}
+svg#colors{
+	float:left;
+}
+#colors{
+	padding-right:0px;
+	float:left;
+}
+#colors ul,
+#labels ul{
+	padding:0;
+	margin-top:-4px;
+	margin-left:0px;
+}
+#colors ul li,
+#labels ul li{
+	list-style-type:none;
+	list-style-image:none;
+	font-family: Helvetica, Arial, sans-serif;
+	line-height:166%;
+}

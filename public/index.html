@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="css/style.css" />
+	<link href='http://fonts.googleapis.com/css?family=Montserrat:400,700' rel='stylesheet' type='text/css'>
+	<title>Ice Plant</title>
+</head>
+<body>
+<div id="container">
+	<div id="header">
+		<h1>Invasive Ricochet</h1>
+		<h2>Effects of non-native plants in the Bay Area</h2>
+		<div id="breadcrumb"><a href="about.html">About</a></div>
+		<div id="menu">
+			<ul>
+				<li class="active first"><a href="" class="akey">Ice Plant</a></li>
+				<li><a href="cape-ivy" class="jkey">Cape Ivy</a></li>
+				<li><a href="french-broom" class="ckey">French Broom</a></li>
+				<li><a href="fennel" class="lkey">Fennel</a></li>
+				
+			</ul>
+		</div>
+	</div>
+	<div id="leftcontainer">
+		<div id="content">
+			<span class="year"></span>
+		</div>
+		<div id="slider">
+			<div id="play" class="pause"></div>
+		</div>
+		<div id="crossfilter">
+			<svg id="graph"></svg>
+			<div id="graphlabel">Sightings. Observation data from Cal-Flora and iNaturalist</div>
+		</div>
+	</div>
+	<div id="rightcontainer">
+		<div id="rightpanel">
+			<h2>Ice Plant (Carpobrotus edulis)</h2>
+			<div id="story"></div>
+		</div>
+		<div id="legend">
+			<h3>Legend</h3>
+			<div id="labels">
+				<ul>
+					<li>Invasive Plant</li>
+					<li>Native Plants</li>
+					<li>&nbsp;</li>
+					<li>Native Animals</li>
+				</ul>
+			</div>
+		<svg id="colors" width="20" height="160">
+			<rect x="0" y="0" width="12" height="12" fill="#ff1100"></rect>
+			<rect x="0" y="23" width="12" height="12" fill="#00cab5"></rect>
+			<rect x="0" y="47" width="12" height="12" fill="#0080ca"></rect>
+			<rect x="0" y="70" width="12" height="12" fill="#fff000"></rect>
+			<rect x="0" y="93" width="12" height="12" fill="#acd0e2"></rect>
+		</svg>
+			<div id="colors">
+				<ul>
+					<li>Ice Plant</li>
+					<li>Indian clover</li>
+					<li>Pink sand verbena</li>
+					<li>Bank Swallow</li>
+					<li>Snowy Plover</li>
+				</ul>
+			</div>
+		</div>
+		
+	</div>
+</div>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="http://d3js.org/d3.geo.tile.v0.min.js"></script>
+	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="http://d3js.org/topojson.v0.min.js"></script>
+	<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>	
+  <script src="js/main.js"></script>
+</body>
+</html>
